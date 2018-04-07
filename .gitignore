@@ -30,3 +30,10 @@
 *.exe
 *.out
 *.app
+
+# Etc
+bin/
+build/
+include/
+lib/
+
