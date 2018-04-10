@@ -37,3 +37,5 @@ build/
 include/
 lib/
 
+# VSCode
+.vscode
