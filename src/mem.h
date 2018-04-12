@@ -2,6 +2,8 @@
 #define MEM_H
 
 #include <iostream>
+#include <vector>
+using namespace std;
 
 class Memory
 {
@@ -12,8 +14,7 @@ class Memory
     void write(uint16_t address, uint8_t b);
 
   private:
-    unsigned int size;
-    uint8_t *arr;
+    vector<uint8_t> arr;
 };
 
 #endif
