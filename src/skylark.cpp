@@ -7,6 +7,7 @@
 #include "loader.h"
 #include <stdlib.h>
 #include <time.h>
+#include <vector>
 
 using namespace std;
 
@@ -31,16 +32,16 @@ void DrawHeart(DisplayBuffer *buffer)
 	}
 }
 
-const int WINDOW_WIDTH = 960;
-const int WINDOW_HEIGHT = 480;
-
-const int RES_WIDTH = 128;
-const int RES_HEIGHT = 64;
-
-const double REFRESH_RATE = 10;
-
 void WindowTest()
 {
+	const int WINDOW_WIDTH = 960;
+	const int WINDOW_HEIGHT = 480;
+
+	const int RES_WIDTH = 128;
+	const int RES_HEIGHT = 64;
+
+	const double REFRESH_RATE = 10;
+
 	DisplayBuffer *displayBuffer = new DisplayBuffer(RES_WIDTH, RES_HEIGHT);
 	WindowRenderer *renderer = new WindowRenderer(WINDOW_WIDTH, WINDOW_HEIGHT);
 
@@ -74,17 +75,22 @@ void WindowTest()
 	}
 }
 
-const uint16_t MEMORY_SIZE = 16;
-
-int main(int argc, char *argv[])
+void TestRomLoader()
 {
+	const uint16_t MEMORY_SIZE = 0x1000;
+	const uint16_t PROGRAM_OFFSET = 0x200;
+	
+	string fileName = "../roms/count_test.ch8";
+
 	Memory *memory = new Memory(MEMORY_SIZE);
 	RomLoader *loader = new RomLoader();
 
-	string fileName = "../roms/count_test.ch8";
-	uint16_t programOffset = 0;
+	loader->LoadFromFile(fileName, memory, PROGRAM_OFFSET);
 
-	loader->LoadFromFile(fileName, memory, programOffset);
+	cout << "Done";
+}
 
-	return 0;
+int main(int argc, char *argv[])
+{
+	TestRomLoader();
 }

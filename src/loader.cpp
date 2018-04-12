@@ -13,16 +13,18 @@ RomLoader::~RomLoader()
 {
 }
 
-// Offset should be 0x200
 void RomLoader::LoadFromFile(string fileName, Memory *memory, uint16_t offset)
 {
-    // Read filestream as bytes
-    basic_ifstream<uint8_t> file(fileName, ios::binary);
-    vector<uint8_t> fileBytes = vector<uint8_t>(istreambuf_iterator<uint8_t>(file),
-                                                istreambuf_iterator<uint8_t>());
+    // TODO: Protect against buffer overflow, odd filesize, etc.
+    // TODO: Optimize for buffering
+
+    // Read ROM file as byte stream and write to memory
+    basic_ifstream<char> file(fileName, ios::binary);
+    vector<char> fileBytes = vector<char>(istreambuf_iterator<char>(file), istreambuf_iterator<char>());
 
     for (uint16_t addr = 0; addr < fileBytes.size(); addr++)
     {
         memory->write(addr + offset, fileBytes[addr]);
+        cout << memory->read(addr + offset);
     }
 }
