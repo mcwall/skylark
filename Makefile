@@ -14,7 +14,7 @@ Build:
 	$(CC) $(SOURCE_FILES) -o $(OUT) $(CC_OPTS)
 
 clean:
-	rm -rf $(SOURCE_DIR)/*
+	rm -rf $(OUTPUT_DIR)/*
 
 run: Build
 	$(OUT)
