@@ -4,12 +4,24 @@
 #include "display.h"
 #include "renderer.h"
 #include "mem.h"
+#include "cpu.h"
 #include "loader.h"
 #include <stdlib.h>
 #include <time.h>
 #include <vector>
 
 using namespace std;
+
+const int WINDOW_WIDTH = 960;
+const int WINDOW_HEIGHT = 480;
+
+const int RES_WIDTH = 128;
+const int RES_HEIGHT = 64;
+
+const uint16_t MEMORY_SIZE = 0x1000;
+const uint16_t PROGRAM_OFFSET = 0x200;
+
+const double REFRESH_RATE = 10;
 
 void DrawHeart(DisplayBuffer *buffer)
 {
@@ -34,13 +46,6 @@ void DrawHeart(DisplayBuffer *buffer)
 
 void WindowTest()
 {
-	const int WINDOW_WIDTH = 960;
-	const int WINDOW_HEIGHT = 480;
-
-	const int RES_WIDTH = 128;
-	const int RES_HEIGHT = 64;
-
-	const double REFRESH_RATE = 10;
 
 	DisplayBuffer *displayBuffer = new DisplayBuffer(RES_WIDTH, RES_HEIGHT);
 	WindowRenderer *renderer = new WindowRenderer(WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -75,22 +80,31 @@ void WindowTest()
 	}
 }
 
-void TestRomLoader()
+void TestCpu()
 {
-	const uint16_t MEMORY_SIZE = 0x1000;
-	const uint16_t PROGRAM_OFFSET = 0x200;
-	
-	string fileName = "../roms/count_test.ch8";
+
+	string fileName = "../roms/test.ch8";
+
+	cout << "---- Started loading ROM---- \n\n";
 
 	Memory *memory = new Memory(MEMORY_SIZE);
+	DisplayBuffer *displayBuffer = new DisplayBuffer(RES_WIDTH, RES_HEIGHT);
+	Processor *cpu = new Processor(memory, displayBuffer);
 	RomLoader *loader = new RomLoader();
 
 	loader->LoadFromFile(fileName, memory, PROGRAM_OFFSET);
 
-	cout << "Done";
+	cout << "---- Successfully loaded ROM---- \n\n\n";
+
+	cout << "---- Started executing CPU---- \n\n";
+
+	while (cpu->ExecuteNext())
+		;
+
+	cout << "\n---- Finished executing CPU---- \n";
 }
 
 int main(int argc, char *argv[])
 {
-	TestRomLoader();
+	TestCpu();
 }

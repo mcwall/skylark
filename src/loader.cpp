@@ -25,6 +25,5 @@ void RomLoader::LoadFromFile(string fileName, Memory *memory, uint16_t offset)
     for (uint16_t addr = 0; addr < fileBytes.size(); addr++)
     {
         memory->write(addr + offset, fileBytes[addr]);
-        cout << memory->read(addr + offset);
     }
 }
