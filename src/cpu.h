@@ -1,8 +1,9 @@
 #ifndef CPU_H
 #define CPU_H
 
+#include "timer.h"
 #include "mem.h"
-#include "display.h"
+#include "frame.h"
 #include <vector>
 
 using namespace std;
@@ -10,14 +11,16 @@ using namespace std;
 class Processor
 {
 public:
-  Processor(Memory *memory, FrameBuffer *frameBuffer);
+  Processor(Memory *memory, Timer *delay_timer, Timer *sound_timer, FrameBuffer *frame_buffer);
   ~Processor();
 
   bool ExecuteNext();
 
 private:
   Memory *memory;
-  FrameBuffer *frameBuffer;
+  Timer *delay_timer;
+  Timer *sound_timer;
+  FrameBuffer *frame_buffer;
 
   uint16_t pc;
   uint16_t i;

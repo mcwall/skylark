@@ -2,7 +2,7 @@
 #define RENDERER_H
 
 #include <SDL2/SDL.h>
-#include "display.h"
+#include "frame.h"
 
 class WindowRenderer
 {

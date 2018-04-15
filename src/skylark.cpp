@@ -1,7 +1,8 @@
 #include <SDL2/SDL.h>
 #include <iostream>
 
-#include "display.h"
+#include "timer.h"
+#include "frame.h"
 #include "renderer.h"
 #include "mem.h"
 #include "cpu.h"
@@ -21,39 +22,22 @@ const int RES_HEIGHT = 32;
 const uint16_t MEMORY_SIZE = 0x1000;
 const uint16_t PROGRAM_OFFSET = 0x200;
 
-const double REFRESH_RATE = 10;
-
-void DrawHeart(FrameBuffer *buffer)
-{
-	buffer->clear();
-
-	for (int x = 0; x < buffer->width(); x++)
-	{
-		for (int y = 0; y < buffer->height(); y++)
-		{
-			double xt = (x - 70) / 17.0;
-			double yt = (y - 24) / -22.0;
-			double exp1 = xt * xt + yt * yt - 1;
-			double exp = exp1 * exp1 * exp1 - (xt * xt - yt * yt * yt);
-			double thresh = 0.3;
-			if (exp <= thresh)
-			{
-				buffer->draw(x, y, true);
-			}
-		}
-	}
-}
+const double FRAMERATE_CAP = 60;
 
 void test_full()
 {
-	string fileName = "../roms/logo.ch8";
+	string fileName = "../roms/scrolling_logo.ch8";
 
 	cout << "---- Started loading ROM---- \n\n";
 
 	Memory *memory = new Memory(MEMORY_SIZE);
+	Timer *delay_timer = new Timer(60);
+	Timer *sound_timer = new Timer(60);
+
 	FrameBuffer *frameBuffer = new FrameBuffer(RES_WIDTH, RES_HEIGHT);
-	Processor *cpu = new Processor(memory, frameBuffer);
 	WindowRenderer *renderer = new WindowRenderer(WINDOW_WIDTH, WINDOW_HEIGHT);
+
+	Processor *cpu = new Processor(memory, delay_timer, sound_timer, frameBuffer);
 
 	RomLoader *loader = new RomLoader();
 
@@ -79,54 +63,31 @@ void test_full()
 			{
 				quit = true;
 			}
-			// if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_l)
-			// {
-			// 	DrawHeart(frameBuffer);
-			// }
 		}
 
 		frameBuffer->begin_frame();
 
 		cpu->ExecuteNext();
-
 		if (frameBuffer->has_changes())
 			renderer->Render(frameBuffer);
 	}
 }
 
-void test_sprites()
+void test_timer()
 {
-	FrameBuffer *frameBuffer = new FrameBuffer(RES_WIDTH, RES_HEIGHT);
-	WindowRenderer *renderer = new WindowRenderer(WINDOW_WIDTH, WINDOW_HEIGHT);
-
-	bool quit = false;
-	SDL_Event e;
-	int factor = 0;
-
-	vector<uint8_t> sprite(1);
-	sprite[0] = 0b10101010;
-
-	frameBuffer->draw(0, 0, sprite);
-
-	renderer->Render(frameBuffer);
-
-	while (!quit)
+	Timer *timer = new Timer(60);
+	while (1)
 	{
-		// Process events
-		while (SDL_PollEvent(&e) != 0)
+		uint16_t timer_val = timer->get();
+		if (timer_val == 0)
 		{
-			if (e.type == SDL_QUIT)
-			{
-				quit = true;
-			}
-			if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_q)
-			{
-				quit = true;
-			}
+			cout << "TIMER\n";
+			timer->set(60);
 		}
 	}
 }
+
 int main(int argc, char *argv[])
 {
-	test_full();
+	test_timer();
 }
