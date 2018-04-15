@@ -1,6 +1,7 @@
 #include "mem.h"
 
 #include <iostream>
+#include <stdexcept>
 #include <vector>
 using namespace std;
 
@@ -13,7 +14,7 @@ uint8_t Memory::read(uint16_t address)
 {
     if (address >= this->arr.size())
     {
-        throw "Invalid memory read access";
+        throw runtime_error("Invalid memory read access");
     }
 
     return this->arr[address];
@@ -23,7 +24,7 @@ void Memory::write(uint16_t address, uint8_t byte)
 {
     if (address >= this->arr.size())
     {
-        throw "Invalid memory write access";
+        throw runtime_error("Invalid memory write access");
     }
 
     this->arr[address] = byte;

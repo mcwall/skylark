@@ -10,14 +10,14 @@ using namespace std;
 class Processor
 {
 public:
-  Processor(Memory *memory, DisplayBuffer *displayBuffer);
+  Processor(Memory *memory, FrameBuffer *frameBuffer);
   ~Processor();
 
   bool ExecuteNext();
 
 private:
   Memory *memory;
-  DisplayBuffer *displayBuffer;
+  FrameBuffer *frameBuffer;
 
   uint16_t pc;
   uint16_t i;

@@ -4,16 +4,18 @@ import sys
 def to_bin(fn_in, fn_out):
     file_in = open(fn_in, 'r')
     out_bytes = []
+    line_num = 0
     for line in file_in:
+        line_num += 1
         s = line.replace('//', '#').split('#')[0].strip()
-        if len(s) == 0:
-            continue
         
-        if len(s) != 4:
+        if len(s) % 2 != 0:
+            print('Invalid opcode on line ' + line_num)
             raise 'Invalid opcode'
-        
-        out_bytes.append(int(s[0:2], 16))
-        out_bytes.append(int(s[2:4], 16))
+
+        for i, c in enumerate(s):
+            if (i%2)==0:
+                out_bytes.append(int(s[i:i+2], 16))
 
     with open(fn_out, 'wb') as file_out:
         file_out.write(bytearray(out_bytes))

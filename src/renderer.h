@@ -10,7 +10,7 @@ public:
   WindowRenderer(int width, int height);
   ~WindowRenderer();
 
-  void Render(DisplayBuffer *buffer);
+  void Render(FrameBuffer *buffer);
 
 private:
   int width, height;

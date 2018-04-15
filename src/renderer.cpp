@@ -11,13 +11,13 @@ WindowRenderer::WindowRenderer(int width, int height)
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 };
 
-void WindowRenderer::Render(DisplayBuffer *buffer)
+void WindowRenderer::Render(FrameBuffer *buffer)
 {
-    int res_width = buffer->getWidth();
-    int res_height = buffer->getHeight();
+    int res_width = buffer->width();
+    int res_height = buffer->height();
 
-    int blockgetWidth = width / buffer->getWidth();
-    int blockHeight = height / buffer->getHeight();
+    int blockWidth = width / buffer->width();
+    int blockHeight = height / buffer->height();
 
     // Clear screen
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF); // BLACK
@@ -32,7 +32,7 @@ void WindowRenderer::Render(DisplayBuffer *buffer)
         {
             if (buffer->get(x, y))
             {
-                SDL_Rect block = {x * blockgetWidth, y * blockHeight, blockgetWidth, blockHeight};
+                SDL_Rect block = {x * blockWidth, y * blockHeight, blockWidth, blockHeight};
                 SDL_RenderFillRect(renderer, &block);
             }
         }

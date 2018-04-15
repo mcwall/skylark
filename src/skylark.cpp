@@ -15,21 +15,21 @@ using namespace std;
 const int WINDOW_WIDTH = 960;
 const int WINDOW_HEIGHT = 480;
 
-const int RES_WIDTH = 128;
-const int RES_HEIGHT = 64;
+const int RES_WIDTH = 64;
+const int RES_HEIGHT = 32;
 
 const uint16_t MEMORY_SIZE = 0x1000;
 const uint16_t PROGRAM_OFFSET = 0x200;
 
 const double REFRESH_RATE = 10;
 
-void DrawHeart(DisplayBuffer *buffer)
+void DrawHeart(FrameBuffer *buffer)
 {
-	buffer->Clear();
+	buffer->clear();
 
-	for (int x = 0; x < buffer->getWidth(); x++)
+	for (int x = 0; x < buffer->width(); x++)
 	{
-		for (int y = 0; y < buffer->getHeight(); y++)
+		for (int y = 0; y < buffer->height(); y++)
 		{
 			double xt = (x - 70) / 17.0;
 			double yt = (y - 24) / -22.0;
@@ -38,22 +38,31 @@ void DrawHeart(DisplayBuffer *buffer)
 			double thresh = 0.3;
 			if (exp <= thresh)
 			{
-				buffer->Draw(x, y, true);
+				buffer->draw(x, y, true);
 			}
 		}
 	}
 }
 
-void WindowTest()
+void test_full()
 {
+	string fileName = "../roms/logo.ch8";
 
-	DisplayBuffer *displayBuffer = new DisplayBuffer(RES_WIDTH, RES_HEIGHT);
+	cout << "---- Started loading ROM---- \n\n";
+
+	Memory *memory = new Memory(MEMORY_SIZE);
+	FrameBuffer *frameBuffer = new FrameBuffer(RES_WIDTH, RES_HEIGHT);
+	Processor *cpu = new Processor(memory, frameBuffer);
 	WindowRenderer *renderer = new WindowRenderer(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-	const double millisPerCycle = 1000 / REFRESH_RATE;
-	string s = "sdfASDF";
+	RomLoader *loader = new RomLoader();
 
-	// Main loop
+	loader->LoadFromFile(fileName, memory, PROGRAM_OFFSET);
+
+	cout << "---- Successfully loaded ROM---- \n\n\n";
+
+	cout << "---- Started executing CPU---- \n\n";
+
 	bool quit = false;
 	SDL_Event e;
 	int factor = 0;
@@ -70,41 +79,54 @@ void WindowTest()
 			{
 				quit = true;
 			}
-			if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_l)
-			{
-				DrawHeart(displayBuffer);
-			}
+			// if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_l)
+			// {
+			// 	DrawHeart(frameBuffer);
+			// }
 		}
 
-		renderer->Render(displayBuffer);
+		frameBuffer->begin_frame();
+
+		cpu->ExecuteNext();
+
+		if (frameBuffer->has_changes())
+			renderer->Render(frameBuffer);
 	}
 }
 
-void TestCpu()
+void test_sprites()
 {
+	FrameBuffer *frameBuffer = new FrameBuffer(RES_WIDTH, RES_HEIGHT);
+	WindowRenderer *renderer = new WindowRenderer(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-	string fileName = "../roms/test.ch8";
+	bool quit = false;
+	SDL_Event e;
+	int factor = 0;
 
-	cout << "---- Started loading ROM---- \n\n";
+	vector<uint8_t> sprite(1);
+	sprite[0] = 0b10101010;
 
-	Memory *memory = new Memory(MEMORY_SIZE);
-	DisplayBuffer *displayBuffer = new DisplayBuffer(RES_WIDTH, RES_HEIGHT);
-	Processor *cpu = new Processor(memory, displayBuffer);
-	RomLoader *loader = new RomLoader();
+	frameBuffer->draw(0, 0, sprite);
 
-	loader->LoadFromFile(fileName, memory, PROGRAM_OFFSET);
+	renderer->Render(frameBuffer);
 
-	cout << "---- Successfully loaded ROM---- \n\n\n";
-
-	cout << "---- Started executing CPU---- \n\n";
-
-	while (cpu->ExecuteNext())
-		;
-
-	cout << "\n---- Finished executing CPU---- \n";
+	while (!quit)
+	{
+		// Process events
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				quit = true;
+			}
+			if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_q)
+			{
+				quit = true;
+			}
+		}
+	}
 }
-
 int main(int argc, char *argv[])
 {
-	TestCpu();
+	test_full();
 }

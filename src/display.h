@@ -1,22 +1,33 @@
-#ifndef DISPLAY_H
-#define DISPLAY_H
+#ifndef FRAMEBUFFER_H
+#define FRAMEBUFFER_H
 
-class DisplayBuffer
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+class FrameBuffer
 {
 
 public:
-  DisplayBuffer(int width, int height);
-  ~DisplayBuffer();
-  bool Draw(int x, int y, bool value);
-  void Clear();
-  // bool DrawSprite(Sprite *sprite);
-  int getWidth();
-  int getHeight();
+  FrameBuffer(int width, int height);
+  ~FrameBuffer();
+
+  void clear();
+  bool draw(int x, int y, bool value);
+  bool draw(int x, int y, vector<uint8_t> sprite);
+
+  int width();
+  int height();
   bool get(int x, int y);
 
+  void begin_frame();
+  bool has_changes();
+
 private:
-  int width, height;
-  bool **buffer;
+  int w, h;
+  vector<vector<bool>> buffer;
+  bool changed;
 };
 
 #endif

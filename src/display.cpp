@@ -1,56 +1,83 @@
 #include "display.h"
 #include <iostream>
+#include <vector>
 
-DisplayBuffer::DisplayBuffer(int width, int height)
+using namespace std;
+
+FrameBuffer::FrameBuffer(int width, int height)
 {
-    this->width = width;
-    this->height = height;
-
-    this->buffer = new bool *[width];
-    for (int x = 0; x < width; x++)
-    {
-        this->buffer[x] = new bool[height];
-        for (int y = 0; y < height; y++)
-            this->buffer[x][y] = false;
-    }
+    this->w = width;
+    this->h = height;
+    this->buffer = vector<vector<bool>>(width, vector<bool>(height));
 }
 
-DisplayBuffer::~DisplayBuffer()
+FrameBuffer::~FrameBuffer()
 {
+    for (int x = 0; x < w; x++)
+        buffer[x].clear();
+
+    buffer.clear();
 }
 
-bool DisplayBuffer::Draw(int x, int y, bool value)
+void FrameBuffer::clear()
 {
-    const bool origScreenPixel = this->buffer[x][y];
-    this->buffer[x][y] ^= value;
-
-    // true iff screen pixel was flipped from set to unset
-    return origScreenPixel && !this->buffer[x][y];
-}
-
-void DisplayBuffer::Clear()
-{
-    for (int x = 0; x < width; x++)
-        for (int y = 0; y < height; y++)
+    for (int x = 0; x < w; x++)
+        for (int y = 0; y < h; y++)
             buffer[x][y] = false;
 }
 
-int DisplayBuffer::getWidth()
+bool FrameBuffer::draw(int x, int y, bool value)
 {
-    return width;
+    // TODO: be smarter about when to mark changes, since it causes an expensive re-render
+    changed = true;
+    const bool origScreenPixel = buffer[x][y];
+    
+    buffer[x][y] = buffer[x][y] ^ value;
+
+    // true iff screen pixel was flipped from set to unset
+    return origScreenPixel && !buffer[x][y];
 }
 
-int DisplayBuffer::getHeight()
+bool FrameBuffer::draw(int x, int y, vector<uint8_t> sprite)
 {
-    return height;
+    // TODO: be smarter about when to mark changes, since it causes an expensive re-render
+    changed = true;
+
+    bool result = false;
+    for (int i = 0; i < sprite.size(); i++)
+    {
+        uint8_t row = sprite[i];
+        for (int j = 0; j < 8; j++)
+        {
+            bool value = (row << j) & 0x80;
+            result = draw((x + j) % w, (y + i) % h, value) && result;
+        }
+    }
+
+    return result;
 }
 
-bool DisplayBuffer::get(int x, int y)
+void FrameBuffer::begin_frame()
+{
+    changed = false;
+}
+
+bool FrameBuffer::has_changes()
+{
+    return changed;
+}
+
+int FrameBuffer::width()
+{
+    return w;
+}
+
+int FrameBuffer::height()
+{
+    return h;
+}
+
+bool FrameBuffer::get(int x, int y)
 {
     return buffer[x][y];
 }
-
-// bool DisplayBuffer::DrawSprite(Sprite *sprite)
-// 	{
-// 		// TODO: Implement sprites
-// 	}

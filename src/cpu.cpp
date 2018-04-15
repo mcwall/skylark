@@ -3,10 +3,11 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <stdexcept>
 
 using namespace std;
 
-Processor::Processor(Memory *memory, DisplayBuffer *displayBuffer)
+Processor::Processor(Memory *memory, FrameBuffer *frameBuffer)
 {
     // TODO: Read from config or consts file, don't hardcode
     this->pc = 0x200;
@@ -14,7 +15,7 @@ Processor::Processor(Memory *memory, DisplayBuffer *displayBuffer)
     this->v = vector<uint8_t>(16);
 
     this->memory = memory;
-    this->displayBuffer = displayBuffer;
+    this->frameBuffer = frameBuffer;
 };
 
 Processor::~Processor()
@@ -50,7 +51,7 @@ void Processor::exec_0(uint16_t opcode)
     // clear display
     if (opcode == 0x00E0)
     {
-        this->displayBuffer->Clear();
+        this->frameBuffer->clear();
         return;
     }
 
@@ -58,10 +59,10 @@ void Processor::exec_0(uint16_t opcode)
     // return from subroutine
     if (opcode == 0x00EE)
     {
-        throw "Subroutines not implemented";
+        throw runtime_error("Subroutines not implemented");
     }
 
-    throw "RCA 1802 program call not implemented";
+    throw runtime_error("RCA 1802 program call not implemented");
 }
 
 void Processor::exec_1(uint16_t opcode)
@@ -72,7 +73,7 @@ void Processor::exec_1(uint16_t opcode)
 
 void Processor::exec_2(uint16_t opcode)
 {
-    throw "Subroutines not implemented";
+    throw runtime_error("Subroutines not implemented");
 }
 
 void Processor::exec_3(uint16_t opcode)
@@ -98,7 +99,7 @@ void Processor::exec_5(uint16_t opcode)
     // only valid opcode structure is 0x5XY0
     if (opcode & 0xF)
     {
-        throw "Invalid opcode";
+        throw runtime_error("Invalid opcode");
     }
 
     // skip if v[x] == v[y]
@@ -110,14 +111,16 @@ void Processor::exec_5(uint16_t opcode)
 
 void Processor::exec_6(uint16_t opcode)
 {
+    // 6XNN
     // v[x] = nn
-    v[opcode & 0x0f00] = (opcode & 0xff);
+    v[(opcode >> 8) & 0xf] = (opcode & 0xff);
 }
 
 void Processor::exec_7(uint16_t opcode)
 {
+    // 7XNN
     // v[x] += nn
-    v[opcode & 0x0f00] += (opcode & 0xff);
+    v[(opcode >> 8) & 0xf] += (opcode & 0xff);
 }
 
 void Processor::exec_8(uint16_t opcode)
@@ -165,7 +168,7 @@ void Processor::exec_8(uint16_t opcode)
         v[x] = v[y] << 1;
         break;
     default:
-        throw "Invalid opcode";
+        throw runtime_error("Invalid opcode");
     }
 }
 
@@ -174,7 +177,7 @@ void Processor::exec_9(uint16_t opcode)
     // only valid opcode structure is 0x5XY0
     if (opcode & 0xF)
     {
-        throw "Invalid opcode";
+        throw runtime_error("Invalid opcode");
     }
 
     // skip if v[x] == v[y]
@@ -204,7 +207,17 @@ void Processor::exec_c(uint16_t opcode)
 
 void Processor::exec_d(uint16_t opcode)
 {
-    // TODO: draw sprites
+    // draw
+
+    uint8_t x = v[(opcode >> 8) & 0xf];
+    uint8_t y = v[(opcode >> 4) & 0xf];
+    uint8_t h = opcode & 0xf;
+
+    vector<uint8_t> sprite(h);
+    for (int n = 0; n < h; n++)
+        sprite[n] = memory->read(i + n);
+
+    v[0xf] = frameBuffer->draw(x, y, sprite) ? 1 : 0;
 }
 
 void Processor::exec_e(uint16_t opcode)
