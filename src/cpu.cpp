@@ -22,8 +22,10 @@ Processor::Processor(Memory *memory, Timer *delay_timer, Timer *sound_timer, Fra
 Processor::~Processor()
 {
     free(memory);
+    free(frame_buffer);
 
     memory = NULL;
+    frame_buffer = NULL;
 }
 
 static void log(string message)
@@ -43,7 +45,7 @@ static void log(uint16_t pc, uint16_t opcode)
 // increment pc
 void Processor::inc()
 {
-    // increment by 2 since mem is 8-bit aligned, but opcodes are 16-bit
+    // increment by 2 since mem words are 1-byte, but opcodes are 2-byte
     pc += 2;
 }
 
@@ -152,9 +154,13 @@ void Processor::exec_8(uint16_t opcode)
         v[x] ^= v[y];
         break;
     case 0x4:
+    {
         // TODO:  VF carry flag
-        v[x] += v[y];
+        unsigned int result = (unsigned int)v[x] + (unsigned int)v[y];
+        v[0xf] = (uint8_t)((result >> 8) & 1);
+        v[x] = (uint8_t)result;
         break;
+    }
     case 0x5:
         // TODO:  VF borrow flag
         v[x] -= v[y];
@@ -275,7 +281,7 @@ void Processor::exec_f(uint16_t opcode)
             memory->write(i++, v[x + k]);
         break;
     case 0x65:
-    for (int k = 0; k <= x; x++)
+        for (int k = 0; k <= x; x++)
             v[x + k] = memory->read(i++);
         break;
     default:

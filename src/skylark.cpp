@@ -26,7 +26,7 @@ const double FRAMERATE_CAP = 60;
 
 void test_full()
 {
-	string fileName = "../roms/scrolling_logo.ch8";
+	string fileName = "../roms/vf_test.ch8";
 
 	cout << "---- Started loading ROM---- \n\n";
 
@@ -34,10 +34,10 @@ void test_full()
 	Timer *delay_timer = new Timer(60);
 	Timer *sound_timer = new Timer(60);
 
-	FrameBuffer *frameBuffer = new FrameBuffer(RES_WIDTH, RES_HEIGHT);
+	FrameBuffer *frame_buffer = new FrameBuffer(RES_WIDTH, RES_HEIGHT);
 	WindowRenderer *renderer = new WindowRenderer(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-	Processor *cpu = new Processor(memory, delay_timer, sound_timer, frameBuffer);
+	Processor *cpu = new Processor(memory, delay_timer, sound_timer, frame_buffer);
 
 	RomLoader *loader = new RomLoader();
 
@@ -65,11 +65,11 @@ void test_full()
 			}
 		}
 
-		frameBuffer->begin_frame();
+		frame_buffer->begin_frame();
 
 		cpu->ExecuteNext();
-		if (frameBuffer->has_changes())
-			renderer->Render(frameBuffer);
+		if (frame_buffer->has_changes())
+			renderer->Render(frame_buffer);
 	}
 }
 
@@ -82,12 +82,12 @@ void test_timer()
 		if (timer_val == 0)
 		{
 			cout << "TIMER\n";
-			timer->set(60);
+			timer->set(20);
 		}
 	}
 }
 
 int main(int argc, char *argv[])
 {
-	test_timer();
+	test_full();
 }

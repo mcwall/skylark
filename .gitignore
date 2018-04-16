@@ -36,6 +36,7 @@ bin/
 build/
 include/
 lib/
+roms/*.ch8
 
 # VSCode
 .vscode
