@@ -8,6 +8,10 @@
 
 using namespace std;
 
+// TODO: Move this to consts file
+const uint16_t FONT_OFFSET = 0x0;
+const uint16_t FONT_WIDTH = 5;
+
 Processor::Processor(Memory *memory, Timer *delay_timer, Timer *sound_timer, FrameBuffer *frame_buffer)
 {
     // TODO: Read from config or consts file, don't hardcode
@@ -30,14 +34,14 @@ Processor::~Processor()
 
 static void log(string message)
 {
-    // cout << "[CPU] " << message << "\n";
+    cout << "[CPU] " << message << "\n";
 }
 
 static void log(uint16_t pc, uint16_t opcode)
 {
-    // stringstream s;
-    // s << "Processing instruction 0x" << hex << opcode << " at 0x" << pc;
-    // log(s.str());
+    stringstream s;
+    s << "Processing instruction 0x" << hex << opcode << " at 0x" << pc;
+    log(s.str());
 }
 
 #pragma region exec functions
@@ -155,32 +159,41 @@ void Processor::exec_8(uint16_t opcode)
         break;
     case 0x4:
     {
-        // TODO:  VF carry flag
         unsigned int result = (unsigned int)v[x] + (unsigned int)v[y];
-        v[0xf] = (uint8_t)((result >> 8) & 1);
+        v[0xf] = (uint8_t)((result >> 8) & 1); // carry flag
         v[x] = (uint8_t)result;
         break;
     }
     case 0x5:
-        // TODO:  VF borrow flag
-        v[x] -= v[y];
+    {
+        int result = (unsigned int)v[x] - (unsigned int)v[y];
+        v[0xf] = result < 0; // borrow flag
+        v[x] = (uint8_t)result;
         break;
+    }
     case 0x6:
-        // TODO:  VF flag
-        v[x] = v[y] >> 1;
+    {
+        v[0xf] = v[y] & 1; // LSB of v[y]
+        uint8_t result = v[y] >> 1;
+        v[x] = result;
+        v[y] = result;
         break;
+    }
     case 0x7:
-        // TODO:  VF flag
-        v[x] = v[y] - v[x];
+    {
+        int result = (unsigned int)v[y] - (unsigned int)v[x];
+        v[0xf] = result < 0; // borrow flag
+        v[x] = (uint8_t)result;
         break;
-    case 0x8:
-        // TODO:  VF flag
-        v[x] = v[y];
-        break;
+    }
     case 0xE:
-        // TODO:  VF flag
-        v[x] = v[y] << 1;
+    {
+        v[0xf] = (v[y] >> 7) & 1; // MSB of v[y]
+        uint8_t result = v[y] << 1;
+        v[x] = result;
+        v[y] = result;
         break;
+    }
     default:
         throw runtime_error("Invalid opcode");
     }
@@ -220,6 +233,7 @@ void Processor::exec_c(uint16_t opcode)
 {
     // TODO: random
     // v[x] = rand() & nn
+    throw runtime_error("Rand not yet implemented");
 }
 
 void Processor::exec_d(uint16_t opcode)
@@ -240,6 +254,7 @@ void Processor::exec_d(uint16_t opcode)
 void Processor::exec_e(uint16_t opcode)
 {
     // TODO: keyboard input
+    throw runtime_error("Keyboard not yet implemented");
 }
 
 void Processor::exec_f(uint16_t opcode)
@@ -270,8 +285,7 @@ void Processor::exec_f(uint16_t opcode)
         i += v[x];
         break;
     case 0x29:
-        // I = font(v[x])
-        throw runtime_error("Fonts not implemented");
+        i = FONT_OFFSET + (FONT_WIDTH * v[x]);
         break;
     case 0x33:
         throw runtime_error("Binary encoding not implemented");

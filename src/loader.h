@@ -10,7 +10,7 @@ public:
   RomLoader();
   ~RomLoader();
 
-  void LoadFromFile(string fileName, Memory *memory, uint16_t offset);
+  void load_rom(string fileName, Memory *memory, uint16_t offset);
 };
 
 #endif

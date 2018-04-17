@@ -14,7 +14,7 @@ RomLoader::~RomLoader()
 {
 }
 
-void RomLoader::LoadFromFile(string fileName, Memory *memory, uint16_t offset)
+void RomLoader::load_rom(string fileName, Memory *memory, uint16_t offset)
 {
     // TODO: Protect against buffer overflow, odd filesize, etc.
     // TODO: Optimize for buffering
@@ -23,7 +23,7 @@ void RomLoader::LoadFromFile(string fileName, Memory *memory, uint16_t offset)
     basic_ifstream<char> file(fileName, ios::binary);
     vector<char> fileBytes = vector<char>(istreambuf_iterator<char>(file), istreambuf_iterator<char>());
 
-    if (fileBytes.empty())
+    if (fileBytes.empty() || fileBytes.size() % 2 != 0)
         throw runtime_error("Invalid ROM");
 
     for (uint16_t addr = 0; addr < fileBytes.size(); addr++)
