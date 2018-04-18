@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "timer.h"
+#include "keyboard.h"
 #include "frame.h"
 #include "renderer.h"
 #include "mem.h"
@@ -26,10 +27,8 @@ const uint16_t FONT_OFFSET = 0x0;
 
 const double FRAMERATE_CAP = 60;
 
-void test_full()
+void test_rom(string rom_file_name)
 {
-	string fileName = "../roms/font_test.ch8";
-
 	cout << "---- Started loading ROM---- \n\n";
 
 	Memory *memory = new Memory(MEMORY_SIZE);
@@ -39,12 +38,14 @@ void test_full()
 	FrameBuffer *frame_buffer = new FrameBuffer(RES_WIDTH, RES_HEIGHT);
 	WindowRenderer *renderer = new WindowRenderer(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-	Processor *cpu = new Processor(memory, delay_timer, sound_timer, frame_buffer);
+	Keyboard *keyboard = new Keyboard();
+
+	Processor *cpu = new Processor(memory, delay_timer, sound_timer, frame_buffer, keyboard);
 
 	RomLoader *loader = new RomLoader();
 	FontLoader *font_loader = new FontLoader();
 
-	loader->load_rom(fileName, memory, PROGRAM_OFFSET);
+	loader->load_rom(rom_file_name, memory, PROGRAM_OFFSET);
 	font_loader->load(memory, FONT_OFFSET);
 
 	cout << "---- Successfully loaded ROM---- \n\n\n";
@@ -93,5 +94,5 @@ void test_timer()
 
 int main(int argc, char *argv[])
 {
-	test_full();
+	test_rom("../roms/keyboard_test.ch8");
 }

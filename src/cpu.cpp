@@ -1,6 +1,7 @@
 #include "cpu.h"
 #include "timer.h"
 #include "mem.h"
+#include <random>
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -12,15 +13,23 @@ using namespace std;
 const uint16_t FONT_OFFSET = 0x0;
 const uint16_t FONT_WIDTH = 5;
 
-Processor::Processor(Memory *memory, Timer *delay_timer, Timer *sound_timer, FrameBuffer *frame_buffer)
+const uint16_t STACK_MIN = 0xeA0;
+const uint16_t STACK_MAX = 0xeff;
+
+Processor::Processor(Memory *memory, Timer *delay_timer, Timer *sound_timer, FrameBuffer *frame_buffer, Keyboard *keyboard)
 {
     // TODO: Read from config or consts file, don't hardcode
     this->pc = 0x200;
     this->i = 0x0;
     this->v = vector<uint8_t>(16);
+    this->sp = STACK_MIN;
+    this->wait_key = 0x100; // any value < 0x100 indicates that we need to wait on a key press
 
     this->memory = memory;
     this->frame_buffer = frame_buffer;
+    this->keyboard = keyboard;
+
+    srand(time(NULL));
 };
 
 Processor::~Processor()
@@ -62,14 +71,16 @@ void Processor::exec_0(uint16_t opcode)
         return;
     }
 
-    // TODO: implement stack and subroutines
     // return from subroutine
     if (opcode == 0x00EE)
     {
-        throw runtime_error("Subroutines not implemented");
+        if (sp <= STACK_MIN)
+            throw runtime_error("Stack underflow");
+
+        pc = memory->read(--sp);
     }
 
-    throw runtime_error("RCA 1802 program call not implemented");
+    throw runtime_error("Unsupported opcode");
 }
 
 void Processor::exec_1(uint16_t opcode)
@@ -80,7 +91,11 @@ void Processor::exec_1(uint16_t opcode)
 
 void Processor::exec_2(uint16_t opcode)
 {
-    throw runtime_error("Subroutines not implemented");
+    if (sp >= STACK_MAX)
+        throw runtime_error("Stack overflow");
+
+    uint16_t n = opcode & 0xfff;
+    memory->write(n, sp++);
 }
 
 void Processor::exec_3(uint16_t opcode)
@@ -231,9 +246,10 @@ void Processor::exec_b(uint16_t opcode)
 
 void Processor::exec_c(uint16_t opcode)
 {
-    // TODO: random
-    // v[x] = rand() & nn
-    throw runtime_error("Rand not yet implemented");
+    // vx = rand()
+    uint8_t x = (opcode >> 8) & 0xf;
+    uint8_t n = opcode & 0xff;
+    v[x] = (rand() % 256) & n;
 }
 
 void Processor::exec_d(uint16_t opcode)
@@ -253,8 +269,23 @@ void Processor::exec_d(uint16_t opcode)
 
 void Processor::exec_e(uint16_t opcode)
 {
-    // TODO: keyboard input
-    throw runtime_error("Keyboard not yet implemented");
+    uint8_t x = (opcode >> 8) & 0xf;
+
+    switch (opcode & 0xff)
+    {
+    case 0x9e:
+        // skip if key pressed
+        if (keyboard->pressed(v[x]))
+            inc();
+        break;
+    case 0xa1:
+        // skip if key not pressed
+        if (!keyboard->pressed(v[x]))
+            inc();
+        break;
+    default:
+        throw runtime_error("Invalid opcode");
+    }
 }
 
 void Processor::exec_f(uint16_t opcode)
@@ -269,8 +300,8 @@ void Processor::exec_f(uint16_t opcode)
         v[x] = delay_timer->get();
         break;
     case 0x0A:
-        // v[x] = get_key()
-        throw runtime_error("Keyboard not implemented");
+        // wait for key press
+        wait_key = true;
         break;
     case 0x15:
         // set_timer(v[x])
@@ -288,7 +319,7 @@ void Processor::exec_f(uint16_t opcode)
         i = FONT_OFFSET + (FONT_WIDTH * v[x]);
         break;
     case 0x33:
-        throw runtime_error("Binary encoding not implemented");
+        throw runtime_error("BCD not implemented");
         break;
     case 0x55:
         for (int k = 0; k <= x; x++)
@@ -306,9 +337,25 @@ void Processor::exec_f(uint16_t opcode)
 
 #pragma endregion
 
-// Return false if we read a 0x0 byte (indicate termination)
-bool Processor::ExecuteNext()
+// return false if we read a 0x0 byte (indicate termination)
+void Processor::ExecuteNext()
 {
+    // if we're waiting on a key press, check it and don't continue until a press occurs
+    // we can't acutally block inside the cpu because we're on the main thread and need to continue processing events
+    if (wait_key)
+    {
+        // if wait_key was pressed, clear the wait_key and continue, otherwise do nothing
+        if (keyboard->pressed(wait_key & 0xff))
+        {
+            
+            wait_key = false;
+        }
+        else
+        {
+            return;
+        }
+    }
+
     // 2 bytes: mem[pc]+mem[pc+1]
     uint16_t opcode = (memory->read(pc) << 8) | memory->read(pc + 1);
     log(pc, opcode);
@@ -377,6 +424,4 @@ bool Processor::ExecuteNext()
     {
         inc();
     }
-
-    return opcode;
 }

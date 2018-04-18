@@ -2,6 +2,7 @@
 #define CPU_H
 
 #include "timer.h"
+#include "keyboard.h"
 #include "mem.h"
 #include "frame.h"
 #include <vector>
@@ -11,20 +12,24 @@ using namespace std;
 class Processor
 {
 public:
-  Processor(Memory *memory, Timer *delay_timer, Timer *sound_timer, FrameBuffer *frame_buffer);
+  Processor(Memory *memory, Timer *delay_timer, Timer *sound_timer, FrameBuffer *frame_buffer, Keyboard *keyboard);
   ~Processor();
 
-  bool ExecuteNext();
+  void ExecuteNext();
 
 private:
   Memory *memory;
   Timer *delay_timer;
   Timer *sound_timer;
   FrameBuffer *frame_buffer;
+  Keyboard *keyboard;
 
   uint16_t pc;
   uint16_t i;
+  uint16_t sp;
   vector<uint8_t> v;
+  
+  bool wait_key;
 
   void inc();
 
