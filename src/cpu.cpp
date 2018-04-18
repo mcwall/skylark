@@ -23,7 +23,7 @@ Processor::Processor(Memory *memory, Timer *delay_timer, Timer *sound_timer, Fra
     this->i = 0x0;
     this->v = vector<uint8_t>(16);
     this->sp = STACK_MIN;
-    this->wait_key = 0x100; // any value < 0x100 indicates that we need to wait on a key press
+    this->wait = false;
 
     this->memory = memory;
     this->frame_buffer = frame_buffer;
@@ -300,9 +300,22 @@ void Processor::exec_f(uint16_t opcode)
         v[x] = delay_timer->get();
         break;
     case 0x0A:
+    {
         // wait for key press
-        wait_key = true;
+        uint8_t key_pressed = keyboard->current();
+        if (key_pressed < 0x10)
+        {
+            // key actually pressed
+            wait = false;
+            v[x] = key_pressed & 0xf;
+        }
+        else
+        {
+            // key not pressed, wait for next key press
+            wait = true;
+        }
         break;
+    }
     case 0x15:
         // set_timer(v[x])
         delay_timer->set(v[x]);
@@ -340,22 +353,6 @@ void Processor::exec_f(uint16_t opcode)
 // return false if we read a 0x0 byte (indicate termination)
 void Processor::ExecuteNext()
 {
-    // if we're waiting on a key press, check it and don't continue until a press occurs
-    // we can't acutally block inside the cpu because we're on the main thread and need to continue processing events
-    if (wait_key)
-    {
-        // if wait_key was pressed, clear the wait_key and continue, otherwise do nothing
-        if (keyboard->pressed(wait_key & 0xff))
-        {
-            
-            wait_key = false;
-        }
-        else
-        {
-            return;
-        }
-    }
-
     // 2 bytes: mem[pc]+mem[pc+1]
     uint16_t opcode = (memory->read(pc) << 8) | memory->read(pc + 1);
     log(pc, opcode);
@@ -420,7 +417,7 @@ void Processor::ExecuteNext()
     }
 
     // increment pc iff we aren't branching/jumping
-    if (!jump)
+    if (!jump && !wait)
     {
         inc();
     }

@@ -64,10 +64,6 @@ void test_rom(string rom_file_name)
 			{
 				quit = true;
 			}
-			if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_q)
-			{
-				quit = true;
-			}
 		}
 
 		frame_buffer->begin_frame();

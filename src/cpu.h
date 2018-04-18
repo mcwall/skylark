@@ -28,8 +28,10 @@ private:
   uint16_t i;
   uint16_t sp;
   vector<uint8_t> v;
-  
-  bool wait_key;
+
+  // whether the cpu is currently waiting
+  // we can't acutally block inside the cpu because we're on the main thread and need to continue processing events
+  bool wait;
 
   void inc();
 
