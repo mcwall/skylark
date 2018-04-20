@@ -5,6 +5,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <stack>
 #include <stdexcept>
 
 using namespace std;
@@ -14,7 +15,8 @@ const uint16_t FONT_OFFSET = 0x0;
 const uint16_t FONT_WIDTH = 5;
 
 const uint16_t STACK_MIN = 0xeA0;
-const uint16_t STACK_MAX = 0xeff;
+// const uint16_t STACK_MAX = 0xfff;
+const uint16_t STACK_MAX = 0x20;
 
 Processor::Processor(Memory *memory, Timer *delay_timer, Timer *sound_timer, FrameBuffer *frame_buffer, Keyboard *keyboard)
 {
@@ -22,12 +24,15 @@ Processor::Processor(Memory *memory, Timer *delay_timer, Timer *sound_timer, Fra
     this->pc = 0x200;
     this->i = 0x0;
     this->v = vector<uint8_t>(16);
-    this->sp = STACK_MIN;
+    // this->sp = STACK_MIN;
+    this->s = stack<uint16_t>();
     this->wait = false;
 
     this->memory = memory;
     this->frame_buffer = frame_buffer;
     this->keyboard = keyboard;
+    this->delay_timer = delay_timer;
+    this->sound_timer = sound_timer;
 
     srand(time(NULL));
 };
@@ -72,12 +77,24 @@ void Processor::exec_0(uint16_t opcode)
     }
 
     // return from subroutine
+    // if (opcode == 0x00EE)
+    // {
+    //     if (sp <= STACK_MIN)
+    //         throw runtime_error("Stack underflow");
+
+    //     pc = memory->read(--sp);
+    //     return;
+    // }
+
+    // return from subroutine
     if (opcode == 0x00EE)
     {
-        if (sp <= STACK_MIN)
+        if (s.empty())
             throw runtime_error("Stack underflow");
 
-        pc = memory->read(--sp);
+        pc = s.top();
+        s.pop();
+        return;
     }
 
     throw runtime_error("Unsupported opcode");
@@ -91,11 +108,19 @@ void Processor::exec_1(uint16_t opcode)
 
 void Processor::exec_2(uint16_t opcode)
 {
-    if (sp >= STACK_MAX)
+    // if (sp >= STACK_MAX)
+    //     throw runtime_error("Stack overflow");
+
+    // uint16_t n = opcode & 0xfff;
+    // memory->write(sp++, pc);
+    // pc = n;
+
+    if (s.size() >= 0x20)
         throw runtime_error("Stack overflow");
 
     uint16_t n = opcode & 0xfff;
-    memory->write(n, sp++);
+    s.push(pc);
+    pc = n;
 }
 
 void Processor::exec_3(uint16_t opcode)
@@ -332,15 +357,19 @@ void Processor::exec_f(uint16_t opcode)
         i = FONT_OFFSET + (FONT_WIDTH * v[x]);
         break;
     case 0x33:
-        throw runtime_error("BCD not implemented");
+    {
+        memory->write(i, 1);     // throw runtime_error("BCD not implemented");
+        memory->write(i + 1, 2); // throw runtime_error("BCD not implemented");
+        memory->write(i  +2, 3);     // throw runtime_error("BCD not implemented");
         break;
+    }
     case 0x55:
-        for (int k = 0; k <= x; x++)
-            memory->write(i++, v[x + k]);
+        for (int k = 0; k <= x; k++)
+            memory->write(i++, v[k]);
         break;
     case 0x65:
-        for (int k = 0; k <= x; x++)
-            v[x + k] = memory->read(i++);
+        for (int k = 0; k <= x; k++)
+            v[k] = memory->read(i++);
         break;
     default:
         throw runtime_error("Invalid opcode");
@@ -355,7 +384,7 @@ void Processor::ExecuteNext()
 {
     // 2 bytes: mem[pc]+mem[pc+1]
     uint16_t opcode = (memory->read(pc) << 8) | memory->read(pc + 1);
-    log(pc, opcode);
+    // log(pc, opcode);
 
     // TODO: try to make this less ugly
     // process instruction
@@ -363,7 +392,6 @@ void Processor::ExecuteNext()
     switch ((opcode >> 12) & 0xf)
     {
     case 0x0:
-        jump = opcode != 0x00E0; // 0x00E0 is display clear, all others are jumps
         exec_0(opcode);
         break;
     case 0x1:

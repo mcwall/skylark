@@ -5,6 +5,7 @@
 #include "keyboard.h"
 #include "mem.h"
 #include "frame.h"
+#include <stack>
 #include <vector>
 
 using namespace std;
@@ -26,8 +27,15 @@ private:
 
   uint16_t pc;
   uint16_t i;
-  uint16_t sp;
   vector<uint8_t> v;
+  
+  // stack and stack pointer
+  // technically we could just use an actual stack data structure
+  // but it's more fun to do it the old-fashioned 'hardware' way
+  // uint16_t sp;
+  // vector<uint16_t> s;
+
+  stack<uint16_t> s;
 
   // whether the cpu is currently waiting
   // we can't acutally block inside the cpu because we're on the main thread and need to continue processing events

@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <vector>
+#include <unistd.h>
 
 using namespace std;
 
@@ -32,14 +33,14 @@ void test_rom(string rom_file_name)
 	cout << "---- Started loading ROM---- \n\n";
 
 	Memory *memory = new Memory(MEMORY_SIZE);
-	Timer *delay_timer = new Timer(60);
-	Timer *sound_timer = new Timer(60);
 
 	FrameBuffer *frame_buffer = new FrameBuffer(RES_WIDTH, RES_HEIGHT);
 	WindowRenderer *renderer = new WindowRenderer(WINDOW_WIDTH, WINDOW_HEIGHT);
 
 	Keyboard *keyboard = new Keyboard();
 
+	Timer *delay_timer = new Timer(60);
+	Timer *sound_timer = new Timer(60);
 	Processor *cpu = new Processor(memory, delay_timer, sound_timer, frame_buffer, keyboard);
 
 	RomLoader *loader = new RomLoader();
@@ -77,18 +78,20 @@ void test_rom(string rom_file_name)
 void test_timer()
 {
 	Timer *timer = new Timer(60);
+	timer->set(96);
 	while (1)
 	{
 		uint16_t timer_val = timer->get();
 		if (timer_val == 0)
 		{
-			cout << "TIMER\n";
-			timer->set(20);
+			cout << "HERE\n";
+			timer->set(96);
 		}
 	}
 }
 
 int main(int argc, char *argv[])
 {
-	test_rom("../roms/keyboard_test.ch8");
+	test_rom("../roms/pong_custom.ch8");
+	// test_timer();
 }

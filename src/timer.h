@@ -1,22 +1,24 @@
 #ifndef TIMER_H
 #define TIMER_H
 
+#include <chrono>
+#include <ctime>
 #include <iostream>
-using namespace std;
+using namespace std::chrono;
 
 class Timer
 {
 public:
-  Timer(uint16_t freq);
+  Timer(uint8_t freq);
   ~Timer();
 
-  void set(uint16_t value);
-  uint16_t get();
+  void set(uint8_t value);
+  uint8_t get();
 
   private:
     double rate;
-    uint16_t start_val;
-    clock_t start_time;
+    uint8_t start_val;
+    high_resolution_clock::time_point start_time;
 };
 
 #endif
