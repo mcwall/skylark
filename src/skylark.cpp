@@ -92,6 +92,6 @@ void test_timer()
 
 int main(int argc, char *argv[])
 {
-	test_rom("../roms/pong_custom.ch8");
+	test_rom("../roms/blinky.ch8");
 	// test_timer();
 }

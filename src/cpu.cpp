@@ -207,7 +207,7 @@ void Processor::exec_8(uint16_t opcode)
     case 0x5:
     {
         int result = (unsigned int)v[x] - (unsigned int)v[y];
-        v[0xf] = result < 0; // borrow flag
+        v[0xf] = result >= 0; // inverse of borrow flag
         v[x] = (uint8_t)result;
         break;
     }
@@ -222,7 +222,7 @@ void Processor::exec_8(uint16_t opcode)
     case 0x7:
     {
         int result = (unsigned int)v[y] - (unsigned int)v[x];
-        v[0xf] = result < 0; // borrow flag
+        v[0xf] = result >= 0; // inverse of borrow flag
         v[x] = (uint8_t)result;
         break;
     }
@@ -358,9 +358,9 @@ void Processor::exec_f(uint16_t opcode)
         break;
     case 0x33:
     {
-        memory->write(i, 1);     // throw runtime_error("BCD not implemented");
-        memory->write(i + 1, 2); // throw runtime_error("BCD not implemented");
-        memory->write(i  +2, 3);     // throw runtime_error("BCD not implemented");
+        memory->write(i, v[x] / 100);
+        memory->write(i + 1, (v[x] % 100) / 10);
+        memory->write(i  +2, (v[x] % 10));
         break;
     }
     case 0x55:
@@ -384,7 +384,7 @@ void Processor::ExecuteNext()
 {
     // 2 bytes: mem[pc]+mem[pc+1]
     uint16_t opcode = (memory->read(pc) << 8) | memory->read(pc + 1);
-    // log(pc, opcode);
+    log(pc, opcode);
 
     // TODO: try to make this less ugly
     // process instruction

@@ -26,22 +26,12 @@ void FrameBuffer::clear()
             buffer[x][y] = false;
 }
 
-bool FrameBuffer::draw(int x, int y, bool value)
-{
-    // TODO: be smarter about when to mark changes, since it causes an expensive re-render
-    changed = true;
-    const bool origScreenPixel = buffer[x][y];
-    
-    buffer[x][y] = buffer[x][y] ^ value;
-
-    // true iff screen pixel was flipped from set to unset
-    return origScreenPixel && !buffer[x][y];
-}
-
 bool FrameBuffer::draw(int x, int y, vector<uint8_t> sprite)
 {
     // TODO: be smarter about when to mark changes, since it causes an expensive re-render
     changed = true;
+
+    // TODO: Clean this up a bit
 
     bool result = false;
     for (int i = 0; i < sprite.size(); i++)
@@ -49,8 +39,21 @@ bool FrameBuffer::draw(int x, int y, vector<uint8_t> sprite)
         uint8_t row = sprite[i];
         for (int j = 0; j < 8; j++)
         {
-            bool value = (row << j) & 0x80;
-            result = draw((x + j) % w, (y + i) % h, value) && result;
+            // if the j-th pixel is set, flip the corresponding pixel
+            if ((row & (0x80 >> j)) != 0)
+            {
+                uint8_t frame_x = (x + j) % w;
+                uint8_t frame_y = (y + i) % h;
+                if (buffer[frame_x][frame_y])
+                {
+                    result = true;
+                    buffer[frame_x][frame_y] = false;
+                }
+                else
+                {
+                    buffer[frame_x][frame_y] = true;
+                }
+            }
         }
     }
 
